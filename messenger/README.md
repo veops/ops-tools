@@ -105,25 +105,18 @@ curl  -X POST \
 ### python
 ```python
 import requests
-import json
 
 reqUrl = "http://localhost:8888/v1/message"
 
-headersList = {
- "Content-Type": "application/json" 
-}
-
-payload = json.dumps({
-  "sender": "wechatBot",
-  "msgtype": "text",
-  "content": {
-    "content": "一行文本内容"
-  }
+response = requests.post(reqUrl, json={
+    "sender": "wechatBot",
+    "msgtype": "text",
+    "content": {
+        "content": "一行文本内容1"
+    }
 })
 
-response = requests.request("POST", reqUrl, data=payload,  headers=headersList)
-
-print(response.text)
+print(response.status_code)
 ```
 
 ### golang
@@ -132,29 +125,23 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"net/http"
-	"io/ioutil"
+
+	"github.com/go-resty/resty/v2"
 )
 
 func main() {
+	reqUrl := "http://localhost:8888/v1/message"
 
-	url := "http://localhost:8888/v1/message"
+	resp, err := resty.New().R().
+		SetBody(map[string]any{
+			"sender":  "wechatBot",
+			"msgtype": "text",
+			"content": map[string]any{
+				"content": "一行文本内容2",
+			},
+		}).Post(reqUrl)
 
-	payload := strings.NewReader("{\n  \"sender\": \"wechatBot\",\n  \"msgtype\": \"text\",\n  \"content\": {\n    \"content\": \"一行文本内容\"\n  }\n}")
-
-	req, _ := http.NewRequest("POST", url, payload)
-
-	req.Header.Add("Content-Type", "application/json")
-
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-	body, _ := ioutil.ReadAll(res.Body)
-
-	fmt.Println(res)
-	fmt.Println(string(body))
-
+	fmt.Println(err, resp.StatusCode())
 }
 ```
 
