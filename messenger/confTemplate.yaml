@@ -1,0 +1,35 @@
+app:
+  ip:
+  port: 8888
+
+senders:
+  - type: email
+    name: email
+    host: mail.xxx.com
+    port: 25
+    account: test@xxx.com
+    password: #无密码时留空即可
+  - type: wechatBot
+    name: wechatBot
+    url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+  - type: wechatApp
+    name: wechatApp
+    corpID: xxxx
+    agentID: 123456
+    corpSecret: xxxx
+  - type: feishuBot
+    name: feishuBot
+    url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
+  - type: feishuApp
+    name: feishuApp
+    appID: cli_xxxx
+    appSecret: xxxx
+  - type: dingdingBot
+    name: dingdingBot
+    url: https://oapi.dingding.com/robot/send?access_token=xxxx
+    token: xxxx #仅加密方式为加签时填写
+  - type: dingdingApp
+    name: dingdingApp
+    appKey: xxxx
+    appSecret: xxxx
+    robotCode: xxxx
