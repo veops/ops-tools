@@ -1,0 +1,1 @@
+go build -o messenger main.go
