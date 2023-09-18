@@ -68,25 +68,26 @@ docker run --name messenger -p 8888:8888  messenger
 
 > 微信，飞书，钉钉发送消息均分为机器人和应用两类（参数传递时，应用消息相比机器人需要多传递tos--接收人列表），以wechatBot发送为例，消息发送代码参考如下
 >
-> 注意：content为最终的内容
+> 注意：content为真实消息内容的json字符串
+> <br>
 > <br>
 > ![wechat text](wechattext.jpg)
 > <br>
-> 如微信text，将text的值对象`{"content": "广州今日天气..."}`做为content的值填入
+> 如微信text，将text的值对象 JSONString(`{"content": "广州今日天气..."}`) 做为content的值填入
 > <br>
 > ![wechat markdown](wechatmarkdown.jpg)
 > <br>
-> 再如微信markdown，将markdown的值对象`{"content": "实时新增用户反馈..."}`做为content的值填入
+> 再如微信markdown，将markdown的值对象 JSONString(`{"content": "实时新增用户反馈..."}`) 做为content的值填入
 > <br>
 > ![feishu text](feishutext.jpg)
 > <br>
-> 再如飞书text消息，将content的值对象`{"text": "新更新提醒"}`做为content的值填入
+> 再如飞书text消息，将content的值对象 JSONString(`{"text": "新更新提醒"}`) 做为content的值填入
 > <br>
 > ![dingding link](dingdinglink.jpg)
 > <br>
-> 再如钉钉link消息，将link的值对象`{"text": "这个即将发布的新版本...","title":"","picUrl":"","messageUrl":""}`做为content的值填入
+> 再如钉钉link消息，将link的值对象 JSONString(`{"text": "这个即将发布的新版本...","title":"","picUrl":"","messageUrl":""}`) 做为content的值填入
 
-以下为一些代码示例
+以下为代码示例
 
 ### curl
 ```bash
@@ -96,14 +97,13 @@ curl  -X POST \
   --data-raw '{
   "sender": "wechatBot",
   "msgtype": "text",
-  "content": {
-    "content": "广州今日天气"
-  }
+  "content": "{\"content\":\"一行文本内容\"}"
 }'
 ```
 
 ### python
 ```python
+import json
 import requests
 
 reqUrl = "http://localhost:8888/v1/message"
@@ -111,9 +111,9 @@ reqUrl = "http://localhost:8888/v1/message"
 response = requests.post(reqUrl, json={
     "sender": "wechatBot",
     "msgtype": "text",
-    "content": {
+    "content": json.dumps({
         "content": "一行文本内容1"
-    }
+    })
 })
 
 print(response.status_code)
@@ -132,68 +132,121 @@ import (
 func main() {
 	reqUrl := "http://localhost:8888/v1/message"
 
+	content, _ := json.Marshal(map[string]any{
+		"content": "一行文本内容2",
+	})
 	resp, err := resty.New().R().
 		SetBody(map[string]any{
 			"sender":  "wechatBot",
 			"msgtype": "text",
-			"content": map[string]any{
-				"content": "一行文本内容2",
-			},
+			"content": string(content),
 		}).Post(reqUrl)
 
 	fmt.Println(err, resp.StatusCode())
 }
 ```
 
+### 鉴权
+
+当配置文件中开启auths鉴权配置后，请求需要加入鉴权信息，目前支持三种鉴权方式
+#### IP
+发送请求的客户端ip需匹配pattern
+
+#### token
+发送请求中需要添加请求头 X-Token = token in your yaml config
+
+#### sign
+签名鉴权需要添加请求头 X-TS = 当前unix秒数时间戳 X-Nonce = 随机内容 X-Sign = 根据签名算法生成的签名
+
+签名算法步骤为
+1. 将ts和nonce信息加入body中 body["ts"] = X-TS, body["nonce"] = X-Nonce
+2. 将body中的键值对按键排序后拼接
+3. 使用配置文件中的secret计算sha256的值，并将结果进行base64编码，如 secret=666时，步骤二中结果为 
+4. 设置请求头中的 X-Sign = 步骤三结果
+```golang
+// golang 签名示例
+secret := "666"
+body := map[string]any{
+"sender":  "wechatBot",
+"msgtype": "text",
+"content": "{\"content\":\"一行文本内容\"}",
+}
+body["ts"] = "1695005697" // cast.ToString(time.Now().Unix())
+body["nonce"] = "123"
+keys := lo.Keys(body)
+sort.Strings(keys)
+
+// content{"content":"一行文本内容"}msgtypetextnonce123senderwechatBotts1695005697
+kvStr := strings.Join(lo.Map(keys, func(k string, _ int) string { return fmt.Sprintf("%s%s", k, body[k]) }), "")
+
+mac := hmac.New(sha256.New, []byte(secret))
+_, _ = mac.Write([]byte(kvStr))
+
+// nAW4/1vz8EjdJEVXqTevmX7yBOzQtUti1Z2TIgAxogc=
+sign := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+```
+
 ## yaml 配置
 
-yaml配置文件定义了服务ip的、端口和各个具体的sender。senders支持动态增删，即再服务已经启动的情况下可以直接修改senders列表，服务会持续读取最新的改动
-
-目前以支持sender类型
-1. email
-2. wechatBot
-3. wechatApp
-4. feishuBot
-5. feishuApp
-6. dingdingBot
-7. dingdingApp
+yaml配置文件定义了
+1. app 服务配置ip的、端口
+2. auths 鉴权方式。多种鉴权方式同时配置时，按配置先后进行检查，满足任意一种方式即通过鉴权。支持的鉴权方式为
+   1. ip
+   2. token
+   3. sign签名
+3. senders 具体发送方式。senders支持动态增删，即再服务已经启动的情况下可以直接修改senders列表，服务会持续读取最新的改动。支持的消息类型为
+   1. email
+   2. wechatBot
+   3. wechatApp
+   4. feishuBot
+   5. feishuApp
+   6. dingdingBot
+   7. dingdingApp
 
 ```yaml
 app:
   ip:
   port: 8888
 
+auths:
+  # - type: ip
+  #   pattern: 192.168.*.* # 支持 ? * [] ^ - 
+  # - type: token
+  #   token: 778899
+  # - type: sign
+  #   secret: 666
+
 senders:
-  - type: email
-    name: email
-    host: mail.xxx.com
-    port: 25
-    account: test@xxx.com
-    password: #无密码时留空即可
-  - type: wechatBot
-    name: wechatBot
-    url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
-  - type: wechatApp
-    name: wechatApp
-    corpID: xxxx
-    agentID: 123456
-    corpSecret: xxxx
-  - type: feishuBot
-    name: feishuBot
-    url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
-  - type: feishuApp
-    name: feishuApp
-    appID: cli_xxxx
-    appSecret: xxxx
-  - type: dingdingBot
-    name: dingdingBot
-    url: https://oapi.dingding.com/robot/send?access_token=xxxx
-    token: xxxx #仅加密方式为加签时填写
-  - type: dingdingApp
-    name: dingdingApp
-    appKey: xxxx
-    appSecret: xxxx
-    robotCode: xxxx
+  # - type: email
+  #   name: email
+  #   host: mail.xxx.com
+  #   port: 25
+  #   account: test@xxx.com
+  #   password: #无密码时留空即可
+  # - type: wechatBot
+  #   name: wechatBot
+  #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+  # - type: wechatApp
+  #   name: wechatApp
+  #   corpID: xxxx
+  #   agentID: 123456
+  #   corpSecret: xxxx
+  # - type: feishuBot
+  #   name: feishuBot
+  #   url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
+  # - type: feishuApp
+  #   name: feishuApp
+  #   appID: cli_xxxx
+  #   appSecret: xxxx
+  # - type: dingdingBot
+  #   name: dingdingBot
+  #   url: https://oapi.dingding.com/robot/send?access_token=xxxx
+  #   token: xxxx #仅加密方式为加签时填写
+  # - type: dingdingApp
+  #   name: dingdingApp
+  #   appKey: xxxx
+  #   appSecret: xxxx
+  #   robotCode: xxxx
 ```
 
 ## 新增发送方式

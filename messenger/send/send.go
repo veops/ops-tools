@@ -8,7 +8,9 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-resty/resty/v2"
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
@@ -82,10 +84,11 @@ func PushConf() {
 
 func PushMessage(ctx *gin.Context) {
 	m := &message{}
-	if err := ctx.ShouldBindJSON(m); err != nil {
+	if err := ctx.ShouldBindBodyWith(&m, binding.JSON); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	json.Unmarshal([]byte(cast.ToString(m.Content)), &m.Content)
 	msgCh <- m
 }
 
