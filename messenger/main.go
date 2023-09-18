@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
+	"messenger/middleware"
 	"messenger/send"
 )
 
@@ -23,13 +24,18 @@ func main() {
 		}
 	})
 	if err := viper.ReadInConfig(); err != nil {
-		log.Panicln(err)
+		log.Fatalln(err)
 	}
 	send.PushConf()
 
+	authConfs := make([]map[string]string, 0)
+	if err := viper.UnmarshalKey("auths", &authConfs); err != nil {
+		log.Fatalln(err)
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	v1 := r.Group("/v1")
+	v1 := r.Group("/v1").Use(middleware.Auth(authConfs))
 	{
 		v1.POST("/message", send.PushMessage)
 	}
