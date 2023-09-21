@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
 
@@ -38,11 +39,11 @@ func (f *feishuApp) send(msg *message) (err error) {
 	resp, err := rc.R().
 		SetAuthToken(f.token).
 		SetQueryParam("receive_id_type", "user_id").
-		SetBody(map[string]any{
+		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"user_ids": msg.Tos,
 			"msg_type": msg.MsgType,
-			"content":  msg.Content,
-		}).
+			"content":  msg.ContentMap,
+		})).
 		Post(feishuSendURL)
 
 	return handleErr("send to feishu app failed", err, resp, func(dt map[string]any) bool { return dt["code"] == 0.0 })
@@ -63,7 +64,7 @@ func (f *feishuApp) checkToken() (err error) {
 	if f.token == "" || f.tokenExpireAt.Before(now) {
 		var resp *resty.Response
 		resp, err = rc.R().
-			SetBody(map[string]string{"app_id": f.conf["appid"], "app_secret": f.conf["appsecret"]}).
+			SetBody(map[string]string{"app_id": f.conf["app_id"], "app_secret": f.conf["app_secret"]}).
 			Post(feishuTokenURL)
 
 		if err = handleErr("get feishu token failed", err, resp, func(dt map[string]any) bool { return dt["code"] == 0.0 }); err != nil {

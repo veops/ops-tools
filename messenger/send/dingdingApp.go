@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
 
@@ -35,15 +36,15 @@ func (d *dingdingApp) send(msg *message) (err error) {
 		return
 	}
 
-	bs, _ := json.Marshal(msg.Content)
+	bs, _ := json.Marshal(msg.ContentMap)
 	resp, err := rc.R().
 		SetHeader("x-acs-dingtalk-access-token", d.token).
-		SetBody(map[string]any{
-			"robotCode": d.conf["robotcode"],
+		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
+			"robotCode": d.conf["robotCode"],
 			"userIds":   msg.Tos,
 			"msgKey":    msg.MsgType,
 			"msgParam":  string(bs),
-		}).
+		})).
 		Post(dingdingSendURL)
 
 	return handleErr("send to dingding app failed", err, resp, func(dt map[string]any) bool {
@@ -68,8 +69,8 @@ func (d *dingdingApp) checkToken() (err error) {
 		var resp *resty.Response
 		resp, err = rc.R().
 			SetBody(map[string]string{
-				"appKey":    d.conf["appkey"],
-				"appSecret": d.conf["appsecret"],
+				"appKey":    d.conf["appKey"],
+				"appSecret": d.conf["appSecret"],
 			}).
 			Post(dingdingTokenURL)
 
