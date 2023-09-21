@@ -40,7 +40,7 @@ func (d *dingdingApp) send(msg *message) (err error) {
 	resp, err := rc.R().
 		SetHeader("x-acs-dingtalk-access-token", d.token).
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
-			"robotCode": d.conf["robotcode"],
+			"robotCode": d.conf["robotCode"],
 			"userIds":   msg.Tos,
 			"msgKey":    msg.MsgType,
 			"msgParam":  string(bs),
@@ -69,8 +69,8 @@ func (d *dingdingApp) checkToken() (err error) {
 		var resp *resty.Response
 		resp, err = rc.R().
 			SetBody(map[string]string{
-				"appKey":    d.conf["appkey"],
-				"appSecret": d.conf["appsecret"],
+				"appKey":    d.conf["appKey"],
+				"appSecret": d.conf["appSecret"],
 			}).
 			Post(dingdingTokenURL)
 

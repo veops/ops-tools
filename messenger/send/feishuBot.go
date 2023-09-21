@@ -1,6 +1,8 @@
 package send
 
-import "github.com/samber/lo"
+import (
+	"github.com/samber/lo"
+)
 
 func init() {
 	registered["feishuBot"] = func(conf map[string]string) sender {
@@ -19,7 +21,7 @@ func (f *feishuBot) send(msg *message) error {
 	resp, err := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msg_type": msg.MsgType,
-			"content":  msg.ContentMap,
+			"content": msg.ContentMap,
 		})).
 		Post(f.conf["url"])
 

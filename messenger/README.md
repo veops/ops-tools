@@ -36,12 +36,6 @@ docker run -d --name messenger -p 8888:8888 -v ./conf.yaml:/messenger/conf.yaml 
         <td>sender名称：发送消息具体sender的名称，对应conf中的name</td>
     </tr>
     <tr>
-        <td >title</td>
-        <td>否</td>
-        <td>string</td>
-        <td>消息标题：消息的标题，仅用于 email 类型</td>
-    </tr>
-    <tr>
         <td>msgtype</td>
         <td>是</td>
         <td>string</td>
@@ -65,11 +59,24 @@ docker run -d --name messenger -p 8888:8888 -v ./conf.yaml:/messenger/conf.yaml 
         <td>string</td>
         <td>消息内容：如果消息内容本身具有结构，那么传入其JSON序列化之后的字符串，如微信应用的文本消息填写`JSONString({"content":"my content"})`</td>
     </tr>
+        <tr>
+        <td >title</td>
+        <td>否</td>
+        <td>string</td>
+        <td>消息标题：仅用于 email 类型</td>
+    </tr>
     <tr>
         <td >tos</td>
         <td>否</td>
         <td>[]string</td>
         <td>接收人列表：发送邮件、应用消息时需要填写</td>
+    </tr>
+    </tr>
+        <tr>
+        <td >ccs</td>
+        <td>否</td>
+        <td>[]string</td>
+        <td>抄送人列表：仅用于 email 类型</td>
     </tr>
     <tr>
         <td >extra</td>
@@ -87,7 +94,7 @@ curl  -X POST \
   'http://localhost:8888/v1/message' \
   --header 'Content-Type: application/json' \
   --data-raw '{
-  "sender": "wechatBot",
+  "sender": "yourSenderName",
   "msgtype": "text",
   "content": "{\"content\":\"一行文本内容\"}"
 }'
@@ -101,7 +108,7 @@ import requests
 reqUrl = "http://localhost:8888/v1/message"
 
 response = requests.post(reqUrl, json={
-    "sender": "wechatBot",
+    "sender": "yourSenderName",
     "msgtype": "text",
     "content": json.dumps({
         "content": "一行文本内容1"
@@ -129,7 +136,7 @@ func main() {
 	})
 	resp, err := resty.New().R().
 		SetBody(map[string]any{
-			"sender":  "wechatBot",
+			"sender":  "yourSenderName",
 			"msgtype": "text",
 			"content": string(content),
 		}).Post(reqUrl)
@@ -211,42 +218,36 @@ auths:
   #   secret: 666
 
 senders:
-  # - type: email
-  #   name: yourSenderName1
-  #   host: mail.xxx.com
-  #   port: 25
-  #   account: test@xxx.com
-  #   password: #无密码时留空即可
-
-  # - type: wechatBot
-  #   name: yourSenderName2
-  #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
-  
-  # - type: wechatApp
-  #   name: yourSenderName3
-  #   corpID: xxxx
-  #   agentID: 123456
-  #   corpSecret: xxxx
-  
-  # - type: feishuBot
-  #   name: yourSenderName4
-  #   url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
-  
-  # - type: feishuApp
-  #   name: yourSenderName5
-  #   appID: cli_xxxx
-  #   appSecret: xxxx
-  
-  # - type: dingdingBot
-  #   name: yourSenderName6
-  #   url: https://oapi.dingding.com/robot/send?access_token=xxxx
-  #   token: xxxx #仅加密方式为加签时填写
-  
-  # - type: dingdingApp
-  #   name: yourSenderName7
-  #   appKey: xxxx
-  #   appSecret: xxxx
-  #   robotCode: xxxx
+  email:
+    # - name: yourSenderName1
+    #   host: mail.xxx.com
+    #   port: 25
+    #   account: test@xxx.com
+    #   password: #无密码时留空即可
+  wechatBot:
+    # - name: yourSenderName2
+    # - url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+  wechatApp:
+    # - name: yourSenderName3
+    #   corpid: xxxx
+    #   agentid: 123456
+    #   corpsecret: xxxx
+  feishuBot:
+    # - name: yourSenderName4
+    #   url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
+  feishuApp:
+    # - name: yourSenderName5
+    #   app_id: cli_xxxx
+    #   app_secret: xxxx
+  dingdingBot:
+    # - name: yourSenderName6
+    #   url: https://oapi.dingding.com/robot/send?access_token=xxxx
+    #   token: xxxx #仅加密方式为加签时填写
+  dingdingApp:
+    # - name: yourSenderName7
+    #   appKey: xxxx
+    #   appSecret: xxxx
+    #   robotCode: xxxx
 ```
 
 ## 新增发送方式
@@ -264,8 +265,8 @@ senders:
 3. 新增init方法将你的sender注册到后台goroutine中，registered的key mysender即为你的sender的类型，可以在配置文件中使用。通常建议将文件名、结构体名、类型名保持一直
    ```golang
    func init() {
-   	registered["wechatBot"] = func(conf map[string]string) sender {
-   		return &wechatBot{conf: conf}
-   	}
+	   registered["mysender"] = func(conf config) sender {
+	       return &wechatBot{conf: conf}
+	   }
    }
    ```

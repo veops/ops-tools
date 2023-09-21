@@ -64,7 +64,7 @@ func (f *feishuApp) checkToken() (err error) {
 	if f.token == "" || f.tokenExpireAt.Before(now) {
 		var resp *resty.Response
 		resp, err = rc.R().
-			SetBody(map[string]string{"app_id": f.conf["appid"], "app_secret": f.conf["appsecret"]}).
+			SetBody(map[string]string{"app_id": f.conf["app_id"], "app_secret": f.conf["app_secret"]}).
 			Post(feishuTokenURL)
 
 		if err = handleErr("get feishu token failed", err, resp, func(dt map[string]any) bool { return dt["code"] == 0.0 }); err != nil {
