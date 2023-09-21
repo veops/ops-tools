@@ -226,7 +226,7 @@ senders:
     #   password: #无密码时留空即可
   wechatBot:
     # - name: yourSenderName2
-    # - url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+    #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
   wechatApp:
     # - name: yourSenderName3
     #   corpid: xxxx
