@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 )
 
@@ -37,12 +38,12 @@ func (w *wechatApp) send(msg *message) (err error) {
 	}
 	resp, err := rc.R().
 		SetQueryParam("access_token", w.token).
-		SetBody(map[string]any{
+		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"touser":    strings.Join(msg.Tos, "|"),
 			"agentid":   w.conf["agentid"],
 			"msgtype":   msg.MsgType,
-			msg.MsgType: msg.Content,
-		}).
+			msg.MsgType: msg.ContentMap,
+		})).
 		Post(wechatSendURL)
 
 	return handleErr("send to wechat app failed", err, resp, func(dt map[string]any) bool { return dt["errcode"] == 0.0 })

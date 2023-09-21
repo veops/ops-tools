@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 func init() {
@@ -24,10 +26,10 @@ type dingdingBot struct {
 //	https://open.dingtalk.com/document/orgapp/custom-bot-creation-and-installation
 func (d *dingdingBot) send(msg *message) error {
 	r := rc.R().
-		SetBody(map[string]any{
+		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msgtype":   msg.MsgType,
-			msg.MsgType: msg.Content,
-		})
+			msg.MsgType: msg.ContentMap,
+		}))
 	if d.conf["token"] != "" {
 		ts := time.Now().UnixMilli()
 		sts := fmt.Sprintf("%d\n%s", ts, d.conf["token"])

@@ -5,39 +5,47 @@ app:
 auths:
   # - type: ip
   #   pattern: 192.168.*.*
+
   # - type: token
   #   token: 778899
+
   # - type: sign
   #   secret: 666
 
 senders:
   # - type: email
-  #   name: email
+  #   name: yourSenderName1
   #   host: mail.xxx.com
   #   port: 25
   #   account: test@xxx.com
   #   password: #无密码时留空即可
+
   # - type: wechatBot
-  #   name: wechatBot
+  #   name: yourSenderName2
   #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+  
   # - type: wechatApp
-  #   name: wechatApp
+  #   name: yourSenderName3
   #   corpID: xxxx
   #   agentID: 123456
   #   corpSecret: xxxx
+  
   # - type: feishuBot
-  #   name: feishuBot
+  #   name: yourSenderName4
   #   url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
+  
   # - type: feishuApp
-  #   name: feishuApp
+  #   name: yourSenderName5
   #   appID: cli_xxxx
   #   appSecret: xxxx
+  
   # - type: dingdingBot
-  #   name: dingdingBot
+  #   name: yourSenderName6
   #   url: https://oapi.dingding.com/robot/send?access_token=xxxx
   #   token: xxxx #仅加密方式为加签时填写
+  
   # - type: dingdingApp
-  #   name: dingdingApp
+  #   name: yourSenderName7
   #   appKey: xxxx
   #   appSecret: xxxx
   #   robotCode: xxxx

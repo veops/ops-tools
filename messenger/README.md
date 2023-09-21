@@ -17,7 +17,7 @@ cp confTemplate.yaml conf.yaml # edit your config
 cd messenger
 cp confTemplate.yaml conf.yaml # edit your config
 docker build --tag messenger .
-docker run --name messenger -p 8888:8888  messenger 
+docker run -d --name messenger -p 8888:8888 -v ./conf.yaml:/messenger/conf.yaml --restart=always messenger 
 ```
 
 ## API
@@ -26,24 +26,29 @@ docker run --name messenger -p 8888:8888  messenger
     <tr>
         <td>参数</td>
         <td>是否必须</td>
+        <td>类型</td>
         <td>描述</td>
     </tr>
     <tr>
         <td >sender</td>
         <td>是</td>
-        <td>发送消息具体sender的名称，对应conf中的name</td>
+        <td>string</td>
+        <td>sender名称：发送消息具体sender的名称，对应conf中的name</td>
     </tr>
     <tr>
         <td >title</td>
         <td>否</td>
-        <td>消息标题，仅用于 email 类型</td>
+        <td>string</td>
+        <td>消息标题：消息的标题，仅用于 email 类型</td>
     </tr>
     <tr>
         <td>msgtype</td>
         <td>是</td>
+        <td>string</td>
         <td>
+          消息内容类型：每种消息发送方式支持多种消息内容类型，各发送方式支持的消息内容类型参考如下
           <table>
-            <tr><td>消息类型</td><td>参考值</td></tr>
+            <tr><td>消息发送方式</td><td>消息内容类型参考</td></tr>
             <tr><td>email</td><td>text/plain text/html</td></tr>
             <tr><td>wechatBot</td><td><a href=https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F>https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F</a></td></tr>
             <tr><td>wechatApp</td><td><a href=https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B>https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B</a></td></tr>
@@ -57,37 +62,24 @@ docker run --name messenger -p 8888:8888  messenger
     <tr>
         <td >content</td>
         <td>是</td>
-        <td>消息内容</td>
+        <td>string</td>
+        <td>消息内容：如果消息内容本身具有结构，那么传入其JSON序列化之后的字符串，如微信应用的文本消息填写`JSONString({"content":"my content"})`</td>
     </tr>
     <tr>
         <td >tos</td>
         <td>否</td>
-        <td>接收人，发送应用消息时需要填写</td>
+        <td>[]string</td>
+        <td>接收人列表：发送邮件、应用消息时需要填写</td>
+    </tr>
+    <tr>
+        <td >extra</td>
+        <td>否</td>
+        <td>string</td>
+        <td>额外参数：通常情况下您只需要关注消息内容类型和其内容发送人，但是当您需要传递一些额外参数时，比如微信应用开启重复检查和检查时间间隔，可以将extra设置为`JSONString({"enable_duplicate_check":1, "duplicate_check_interval": 1800})`</td>
     </tr>
 </table>
 
-> 微信，飞书，钉钉发送消息均分为机器人和应用两类（参数传递时，应用消息相比机器人需要多传递tos--接收人列表），以wechatBot发送为例，消息发送代码参考如下
->
-> 注意：content为真实消息内容的json字符串
-> <br>
-> <br>
-> ![wechat text](wechattext.jpg)
-> <br>
-> 如微信text，将text的值对象 JSONString(`{"content": "广州今日天气..."}`) 做为content的值填入
-> <br>
-> ![wechat markdown](wechatmarkdown.jpg)
-> <br>
-> 再如微信markdown，将markdown的值对象 JSONString(`{"content": "实时新增用户反馈..."}`) 做为content的值填入
-> <br>
-> ![feishu text](feishutext.jpg)
-> <br>
-> 再如飞书text消息，将content的值对象 JSONString(`{"text": "新更新提醒"}`) 做为content的值填入
-> <br>
-> ![dingding link](dingdinglink.jpg)
-> <br>
-> 再如钉钉link消息，将link的值对象 JSONString(`{"text": "这个即将发布的新版本...","title":"","picUrl":"","messageUrl":""}`) 做为content的值填入
-
-以下为代码示例
+以下为微信机器人发送消息代码示例
 
 ### curl
 ```bash
@@ -148,7 +140,7 @@ func main() {
 
 ### 鉴权
 
-当配置文件中开启auths鉴权配置后，请求需要加入鉴权信息，目前支持三种鉴权方式
+当配置文件中开启auths鉴权配置后，请求需要加入鉴权信息，目前支持三种鉴权方式.
 #### IP
 发送请求的客户端ip需匹配pattern
 
@@ -194,7 +186,7 @@ yaml配置文件定义了
    1. ip
    2. token
    3. sign签名
-3. senders 具体发送方式。senders支持动态增删，即再服务已经启动的情况下可以直接修改senders列表，服务会持续读取最新的改动。支持的消息类型为
+3. senders 具体发送方式。senders支持动态增删，即再服务已经启动的情况下可以直接修改senders列表，服务会持续读取最新的改动。支持的发送方式类型
    1. email
    2. wechatBot
    3. wechatApp
@@ -210,40 +202,48 @@ app:
 
 auths:
   # - type: ip
-  #   pattern: 192.168.*.* # 支持 ? * [] ^ - 
+  #   pattern: 192.168.*.*
+
   # - type: token
   #   token: 778899
+
   # - type: sign
   #   secret: 666
 
 senders:
   # - type: email
-  #   name: email
+  #   name: yourSenderName1
   #   host: mail.xxx.com
   #   port: 25
   #   account: test@xxx.com
   #   password: #无密码时留空即可
+
   # - type: wechatBot
-  #   name: wechatBot
+  #   name: yourSenderName2
   #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
+  
   # - type: wechatApp
-  #   name: wechatApp
+  #   name: yourSenderName3
   #   corpID: xxxx
   #   agentID: 123456
   #   corpSecret: xxxx
+  
   # - type: feishuBot
-  #   name: feishuBot
+  #   name: yourSenderName4
   #   url: https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxx
+  
   # - type: feishuApp
-  #   name: feishuApp
+  #   name: yourSenderName5
   #   appID: cli_xxxx
   #   appSecret: xxxx
+  
   # - type: dingdingBot
-  #   name: dingdingBot
+  #   name: yourSenderName6
   #   url: https://oapi.dingding.com/robot/send?access_token=xxxx
   #   token: xxxx #仅加密方式为加签时填写
+  
   # - type: dingdingApp
-  #   name: dingdingApp
+  #   name: yourSenderName7
   #   appKey: xxxx
   #   appSecret: xxxx
   #   robotCode: xxxx
@@ -253,8 +253,8 @@ senders:
 
 通常情况下，以上7中方式能满足大部分需求，但是如果你想要定制自己的sender，可以按如下步骤进行开发
 
-1. 再send目录下创建你的sender文件，如mysender.go
-2. 定义mysender类并实现sender接口
+1. 在send目录下创建你的sender文件，如mysender.go
+2. 定义mysender结构体并实现sender接口
    ```golang
    type sender interface {
 	   send(*message) error
@@ -264,8 +264,8 @@ senders:
 3. 新增init方法将你的sender注册到后台goroutine中，registered的key mysender即为你的sender的类型，可以在配置文件中使用。通常建议将文件名、结构体名、类型名保持一直
    ```golang
    func init() {
-	   registered["mysender"] = func(conf map[string]string) sender {
-	   return &feishuBot{conf: conf}
-	  }
+   	registered["wechatBot"] = func(conf map[string]string) sender {
+   		return &wechatBot{conf: conf}
+   	}
    }
    ```

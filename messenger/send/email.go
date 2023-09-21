@@ -37,7 +37,7 @@ func (e *email) send(msg *message) (err error) {
 	m.SetHeader("From", e.conf["account"])
 	m.SetHeader("To", msg.Tos...)
 	m.SetHeader("Subject", msg.Title)
-	m.SetBody(msg.MsgType, cast.ToString(msg.Content))
+	m.SetBody(msg.MsgType, msg.Content)
 
 	if err = e.d.DialAndSend(m); err != nil {
 		log.Println(err)

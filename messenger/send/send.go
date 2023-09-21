@@ -30,9 +30,13 @@ type sender interface {
 type message struct {
 	Sender  string   `json:"sender"`
 	Title   string   `json:"title"`
-	Content any      `json:"content"`
+	Content string   `json:"content"`
 	MsgType string   `json:"msgtype"`
 	Tos     []string `json:"tos"`
+	Extra   string   `json:"extra"`
+
+	ContentMap map[string]any
+	ExtraMap   map[string]any
 }
 
 func init() {
@@ -88,7 +92,8 @@ func PushMessage(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	json.Unmarshal([]byte(cast.ToString(m.Content)), &m.Content)
+	json.Unmarshal([]byte(cast.ToString(m.Content)), &m.ContentMap)
+	json.Unmarshal([]byte(cast.ToString(m.Extra)), &m.ExtraMap)
 	msgCh <- m
 }
 
