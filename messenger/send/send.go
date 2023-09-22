@@ -106,6 +106,7 @@ func handleConfig(typedConfs map[string][]map[string]string) {
 		}
 	}
 
+	valid := make(map[string]struct{})
 	for _, conf := range confs {
 		name := conf["name"]
 		if s, ok := name2sender[name]; !ok || !reflect.DeepEqual(conf, s.getConf()) {
@@ -114,6 +115,13 @@ func handleConfig(typedConfs map[string][]map[string]string) {
 				continue
 			}
 			name2sender[name] = f(conf)
+			valid[name] = struct{}{}
+		}
+	}
+
+	for n := range name2sender {
+		if _, ok := valid[n]; !ok {
+			delete(name2sender, n)
 		}
 	}
 }

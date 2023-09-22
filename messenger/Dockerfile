@@ -12,6 +12,5 @@ RUN set -eux && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk
 RUN apk add tzdata
 ENV TZ=Asia/Shanghai
 WORKDIR /messenger
-COPY --from=0 /messenger/conf.yaml .
 COPY --from=0 /messenger/messenger .
 CMD [ "./messenger"]

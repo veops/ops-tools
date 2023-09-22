@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	f := file.Provider("conf.yaml")
+	f := file.Provider("conf/conf.yaml")
 	if err := k.Load(f, yaml.Parser()); err != nil {
 		log.Fatalln(err)
 	}
@@ -44,7 +44,6 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.MaxMultipartMemory = 100 << 20 //100MB
 	v1 := r.Group("/v1").Use(middleware.Auth(authConfs))
 	{
 		v1.POST("/message", send.PushMessage)
@@ -60,3 +59,4 @@ func main() {
 		log.Println(err)
 	}
 }
+

@@ -8,16 +8,16 @@ messenger是一个简单轻量的消息发送服务，支持邮件、微信、�
 ```bash
 cd messenger
 sh build.sh
-cp confTemplate.yaml conf.yaml # edit your config
+cp conf/confTemplate.yaml conf/conf.yaml # edit your config
 ./messenger
 ```
 
 ### docker
 ```bash
 cd messenger
-cp confTemplate.yaml conf.yaml # edit your config
+cp conf/confTemplate.yaml conf/conf.yaml # edit your config
 docker build --tag messenger .
-docker run -d --name messenger -p 8888:8888 -v ./conf.yaml:/messenger/conf.yaml --restart=always messenger 
+docker run -d --name messenger -p 8888:8888 -v $(pwd)/conf:/messenger/conf --restart=always messenger 
 ```
 
 ## API
