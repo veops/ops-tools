@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/jinzhu/copier v0.4.0
 	github.com/knadh/koanf v1.5.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
@@ -38,7 +39,6 @@ require (
 require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gin-gonic/gin v1.9.1
-	github.com/knadh/koanf/v2 v2.0.1
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/samber/lo v1.38.1

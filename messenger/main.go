@@ -5,58 +5,41 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/knadh/koanf/parsers/yaml"
-	"github.com/knadh/koanf/providers/file"
-	"github.com/knadh/koanf/v2"
 	"golang.org/x/sync/errgroup"
 
+	"messenger/global"
 	"messenger/middleware"
 	"messenger/send"
 )
 
-var (
-	k = koanf.New(".")
-)
-
 func main() {
-	f := file.Provider("conf/conf.yaml")
-	if err := k.Load(f, yaml.Parser()); err != nil {
+	authConf, err := global.GetAuthConf()
+	if err != nil {
 		log.Fatalln(err)
 	}
-	f.Watch(func(event interface{}, err error) {
-		if err != nil {
-			log.Fatalln(err)
-			return
-		}
-		k.Load(f, yaml.Parser())
-		confs := make(map[string][]map[string]string)
-		k.Unmarshal("senders", &confs)
-		send.PushConf(confs)
-	})
-	confs := make(map[string][]map[string]string)
-	k.Unmarshal("senders", &confs)
-	send.PushConf(confs)
-
-	authConfs := make([]map[string]string, 0)
-	if err := k.Unmarshal("auths", &authConfs); err != nil {
+	appConf, err := global.GetAppConf()
+	if err != nil {
 		log.Fatalln(err)
 	}
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	v1 := r.Group("/v1").Use(middleware.Auth(authConfs))
+	v1 := r.Group("/v1").Use(middleware.Auth(authConf), middleware.Error2Resp())
 	{
 		v1.POST("/message", send.PushMessage)
+
+		v1.POST("/senders", global.PushRemoteConf)
+		v1.PUT("/senders", global.PushRemoteConf)
+		v1.DELETE("/senders", global.PushRemoteConf)
 	}
 
 	eg := &errgroup.Group{}
 	eg.Go(send.Start)
 	eg.Go(func() error {
-		return r.Run(fmt.Sprintf("%s:%d", k.String("app.ip"), k.Int("app.port")))
+		return r.Run(fmt.Sprintf("%s:%s", appConf["ip"], appConf["port"]))
 	})
 	log.Println("start successfully...")
 	if err := eg.Wait(); err != nil {
 		log.Println(err)
 	}
 }
-

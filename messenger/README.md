@@ -2,7 +2,7 @@
 
 messenger是一个简单轻量的消息发送服务，支持邮件、微信、飞书、钉钉，同时支持配置动态修改，使用简单灵活
 
-## 使用方式
+## 安装
 
 ### 源码
 ```bash
@@ -22,71 +22,26 @@ docker run -d --name messenger -p 8888:8888 -v $(pwd)/conf:/messenger/conf --res
 
 ## API
 
-<table>
-    <tr>
-        <td>参数</td>
-        <td>是否必须</td>
-        <td>类型</td>
-        <td>描述</td>
-    </tr>
-    <tr>
-        <td >sender</td>
-        <td>是</td>
-        <td>string</td>
-        <td>sender名称：发送消息具体sender的名称，对应conf中的name</td>
-    </tr>
-    <tr>
-        <td>msgtype</td>
-        <td>是</td>
-        <td>string</td>
-        <td>
-          消息内容类型：每种消息发送方式支持多种消息内容类型，各发送方式支持的消息内容类型参考如下
-          <table>
-            <tr><td>消息发送方式</td><td>消息内容类型参考</td></tr>
-            <tr><td>email</td><td>text/plain text/html</td></tr>
-            <tr><td>wechatBot</td><td><a href=https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F>https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F</a></td></tr>
-            <tr><td>wechatApp</td><td><a href=https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B>https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B</a></td></tr>
-            <tr><td>feishuBot</td><td><a href=https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#5a997364>https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#5a997364</a></td></tr>
-            <tr><td>feishuApp</td><td><a href=https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#3c92befd>https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#3c92befd</a></td></tr>
-            <tr><td>dingdingBot</td><td><a href=https://open.dingtalk.com/document/orgapp/custom-robot-access#title-72m-8ag-pqw>https://open.dingtalk.com/document/orgapp/custom-robot-access#title-72m-8ag-pqw</a></td></tr>
-            <tr><td>dingdingApp</td><td><a href=https://open.dingtalk.com/document/orgapp/types-of-messages-sent-by-robots?spm>https://open.dingtalk.com/document/orgapp/types-of-messages-sent-by-robots?spm</a></td></tr>
-          </table>
-        </td>
-    </tr>
-    <tr>
-        <td >content</td>
-        <td>是</td>
-        <td>string</td>
-        <td>消息内容：如果消息内容本身具有结构，那么传入其JSON序列化之后的字符串，如微信应用的文本消息填写`JSONString({"content":"my content"})`</td>
-    </tr>
-        <tr>
-        <td >title</td>
-        <td>否</td>
-        <td>string</td>
-        <td>消息标题：仅用于 email 类型</td>
-    </tr>
-    <tr>
-        <td >tos</td>
-        <td>否</td>
-        <td>[]string</td>
-        <td>接收人列表：发送邮件、应用消息时需要填写</td>
-    </tr>
-    </tr>
-        <tr>
-        <td >ccs</td>
-        <td>否</td>
-        <td>[]string</td>
-        <td>抄送人列表：仅用于 email 类型</td>
-    </tr>
-    <tr>
-        <td >extra</td>
-        <td>否</td>
-        <td>string</td>
-        <td>额外参数：通常情况下您只需要关注消息内容类型和其内容发送人，但是当您需要传递一些额外参数时，比如微信应用开启重复检查和检查时间间隔，可以将extra设置为`JSONString({"enable_duplicate_check":1, "duplicate_check_interval": 1800})`</td>
-    </tr>
-</table>
+### 发送消息
 
-以下为微信机器人发送消息代码示例
+请求方式：POST
+
+请求地址：http://127.0.0.1:8888/v1/message
+
+参数说明：
+
+| 参数   | 是否必须 | 类型   | 说明                                                   |
+| :----- | :------- | :----- | :----------------------------------------------------- |
+| sender | 是       | string | sender名称：发送消息具体sender的名称，对应conf中的name |
+| msgtype | 是       | string | 消息内容类型：每种消息发送方式支持多种消息内容类型，各发送方式支持的消息内容类型参考如下 <br> email: text/plain text/html <br> wechatBot: [微信机器人](https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F>https://developer.work.weixin.qq.com/document/path/99110#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E5%8F%8A%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F)  &emsp;&emsp;&emsp;&nbsp; wechatApp：[微信应用](https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B>https://developer.work.weixin.qq.com/document/path/90236#%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B) <br>  feishuBot：[飞书机器人](https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#5a997364>https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#5a997364) &emsp;&emsp;&emsp;&nbsp; feishuApp：[飞书应用](https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#3c92befd>https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#3c92befd) <br> dingdingBot：[钉钉机器人](https://open.dingtalk.com/document/orgapp/custom-robot-access#title-72m-8ag-pqw>https://open.dingtalk.com/document/orgapp/custom-robot-access#title-72m-8ag-pqw) &emsp;&emsp; dingdingApp：[钉钉应用](https://open.dingtalk.com/document/orgapp/types-of-messages-sent-by-robots?spm>https://open.dingtalk.com/document/orgapp/types-of-messages-sent-by-robots?spm)|
+|content|是|string|消息内容：邮件可直接填写内容字符串，其他消息内容本身具有结构，传入其JSON序列化之后的字符串，如微信应用的文本消息填写`{"content":"my content"}`序列化后字符串|
+|title|否|string|消息标题：仅用于 email 类型|
+|tos|否|[]string|接收人列表：发送邮件、应用消息时需要填写|
+|ccs|否|[]string|抄送人列表：仅用于 email 类型|
+|extra|否|string|额外参数：通常情况下您只需要关注消息内容类型和其内容发送人，但是当您需要传递一些额外参数时，比如微信应用开启重复检查和检查时间间隔，可以将extra设置为`{"enable_duplicate_check":1, "duplicate_check_interval": 1800}`序列化后字符串|
+|sync|否|bool|同步发送：默认情况下，发送请求接受成功即返回200，消息会异步发送，若sync为true则会同步等待消息发送结果并返回|
+
+请求示例：
 
 ### curl
 ```bash
@@ -145,6 +100,19 @@ func main() {
 }
 ```
 
+### 更新配置
+
+请求方式：POST PUT DELETE
+
+请求地址：http://127.0.0.1:8888/v1/sender
+
+参数说明：
+
+| 参数（请求体）   | 是否必须 | 类型   | 说明                                                   |
+| :----- | :------- | :----- | :----------------------------------------------------- |
+|body|是|json|请求body为您的sender配置，如`{"wechatBot": [{"name": "yourSenderName", "url": "https://xxx"}]`<br>POST：同类型配置会被全部覆盖<br>PUT：同类型同名称的配置会被更新，新配置将被添加<br>DELETE：同类型同名称配置将被删除|
+
+
 ### 鉴权
 
 当配置文件中开启auths鉴权配置后，请求需要加入鉴权信息，目前支持三种鉴权方式.
@@ -185,22 +153,22 @@ _, _ = mac.Write([]byte(kvStr))
 sign := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 ```
 
-## yaml 配置
+## 配置说明
 
 yaml配置文件定义了
 1. app 服务配置ip的、端口
 2. auths 鉴权方式。多种鉴权方式同时配置时，按配置先后进行检查，满足任意一种方式即通过鉴权。支持的鉴权方式为
-   1. ip
-   2. token
-   3. sign签名
+   - ip
+   - token
+   - sign签名
 3. senders 具体发送方式。senders支持动态增删，即再服务已经启动的情况下可以直接修改senders列表，服务会持续读取最新的改动。支持的发送方式类型
-   1. email
-   2. wechatBot
-   3. wechatApp
-   4. feishuBot
-   5. feishuApp
-   6. dingdingBot
-   7. dingdingApp
+   - email
+   - wechatBot
+   - wechatApp
+   - feishuBot
+   - feishuApp
+   - dingdingBot
+   - dingdingApp
 
 ```yaml
 app:
@@ -250,7 +218,7 @@ senders:
     #   robotCode: xxxx
 ```
 
-## 新增发送方式
+## 自定义发送
 
 通常情况下，以上7中方式能满足大部分需求，但是如果你想要定制自己的sender，可以按如下步骤进行开发
 

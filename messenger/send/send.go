@@ -11,12 +11,14 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cast"
+
+	"messenger/global"
 )
 
 var (
 	registered  = make(map[string]func(map[string]string) sender)
 	msgCh       = make(chan *message, 10000)
-	confCh      = make(chan map[string][]map[string]string, 1)
+	confCh      = make(chan struct{}, 1)
 	name2sender = make(map[string]sender)
 	rc          = resty.New()
 )
@@ -34,37 +36,68 @@ type message struct {
 	Tos        []string       `json:"tos"`
 	Ccs        []string       `json:"ccs"`
 	Extra      string         `json:"extra"`
+	Sync       bool           `json:"sync"`
 	ContentMap map[string]any `json:"-"`
 	ExtraMap   map[string]any `json:"-"`
 }
 
 func init() {
 	rc.RetryCount = 3
+	global.RegisterWatchCallbacks(func() {
+		confCh <- struct{}{}
+	})
 }
 
 func Start() error {
 	for {
 		select {
-		case c := <-confCh:
-			handleConfig(c)
+		case <-confCh:
+			handleConfig()
 		case msg := <-msgCh:
 		PRIORITY:
 			for {
 				select {
-				case c := <-confCh:
-					handleConfig(c)
+				case <-confCh:
+					fmt.Println(3)
+					handleConfig()
 				default:
 					break PRIORITY
 				}
 			}
-			handleMessage(msg)
+			go handleMessage(msg)
 		}
 	}
 }
 
-func renderPretty(a any) string {
-	bs, _ := json.MarshalIndent(a, "", " ")
-	return string(bs)
+func PushMessage(ctx *gin.Context) {
+	m := &message{}
+	if err := ctx.ShouldBindBodyWith(&m, binding.JSON); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if s, ok := name2sender[m.Sender]; ok && s != nil && s.getConf()["type"] != "email" {
+		if m.Content != "" {
+			if err := json.Unmarshal([]byte(cast.ToString(m.Content)), &m.ContentMap); err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		}
+		if m.Extra != "" {
+			if err := json.Unmarshal([]byte(cast.ToString(m.Extra)), &m.ExtraMap); err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		}
+	}
+
+	if m.Sync {
+		if err := handleMessage(m); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	msgCh <- m
 }
 
 func handleErr(info string, e error, resp *resty.Response, isOk func(dt map[string]any) bool) error {
@@ -75,48 +108,30 @@ func handleErr(info string, e error, resp *resty.Response, isOk func(dt map[stri
 	dt := make(map[string]any)
 	_ = json.Unmarshal(resp.Body(), &dt)
 	if resp.StatusCode() != 200 || !isOk(dt) {
-		return fmt.Errorf("%s httpcode=%v resp=%s", info, resp.StatusCode(), renderPretty(dt))
+		return fmt.Errorf("%s httpcode=%v resp=%s", info, resp.StatusCode(), global.RenderPretty(dt))
 	}
 
 	return nil
 }
 
-func PushConf(confs map[string][]map[string]string) {
-	confCh <- confs
-}
-
-func PushMessage(ctx *gin.Context) {
-	m := &message{}
-	if err := ctx.ShouldBindBodyWith(&m, binding.JSON); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+func handleConfig() {
+	confs, err := global.GetSenders()
+	if err != nil {
+		log.Println(err)
 		return
-	}
-	json.Unmarshal([]byte(cast.ToString(m.Content)), &m.ContentMap)
-	json.Unmarshal([]byte(cast.ToString(m.Extra)), &m.ExtraMap)
-
-	msgCh <- m
-}
-
-func handleConfig(typedConfs map[string][]map[string]string) {
-	confs := make([]map[string]string, 0)
-	for t, cs := range typedConfs {
-		for _, c := range cs {
-			c["type"] = t
-			confs = append(confs, c)
-		}
 	}
 
 	valid := make(map[string]struct{})
 	for _, conf := range confs {
 		name := conf["name"]
-		if s, ok := name2sender[name]; !ok || !reflect.DeepEqual(conf, s.getConf()) {
+		if s, ok := name2sender[name]; !ok || s == nil || !reflect.DeepEqual(conf, s.getConf()) {
 			f, ok := registered[conf["type"]]
 			if !ok || f == nil {
 				continue
 			}
 			name2sender[name] = f(conf)
-			valid[name] = struct{}{}
 		}
+		valid[name] = struct{}{}
 	}
 
 	for n := range name2sender {
@@ -126,20 +141,25 @@ func handleConfig(typedConfs map[string][]map[string]string) {
 	}
 }
 
-func handleMessage(msg *message) {
-	s, ok := name2sender[msg.Sender]
-	if !ok {
-		log.Printf("cannot find sender with name %s\n", msg.Sender)
-		return
-	}
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Println(r)
-			}
-		}()
-		if err := s.send(msg); err != nil {
-			log.Printf("send failed message=%s\nerr=%v\n", renderPretty(msg), err)
+func handleMessage(msg *message) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+		if err != nil {
+			log.Println(err)
 		}
 	}()
+
+	s, ok := name2sender[msg.Sender]
+	if !ok {
+		err = fmt.Errorf("cannot find sender with name %s", msg.Sender)
+		return
+	}
+
+	if err = s.send(msg); err != nil {
+		err = fmt.Errorf("send failed message=%s\nerr=%v", global.RenderPretty(msg), err)
+	}
+
+	return
 }
