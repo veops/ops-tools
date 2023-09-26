@@ -112,6 +112,25 @@ func main() {
 | :----- | :------- | :----- | :----------------------------------------------------- |
 |body|是|json|请求body为您的sender配置，如`{"wechatBot": [{"name": "yourSenderName", "url": "https://xxx"}]`<br>POST：同类型配置会被全部覆盖<br>PUT：同类型同名称的配置会被更新，新配置将被添加<br>DELETE：同类型同名称配置将被删除|
 
+### 查询用户ID
+
+请求方式：POST
+
+请求地址：http://127.0.0.1:8888/v1/uid/getbyphone
+
+参数说明：
+
+| 参数   | 是否必须 | 类型   | 说明          |
+| :----- | :------- | :----- | :------------ |
+|sender|是|string|查询用户id时使用的sender名称|
+|phone|是|string|手机号|
+
+返回结果：
+```json
+{
+  "uid": "xxxxxxxxxxxxx"
+}
+```
 
 ### 鉴权
 

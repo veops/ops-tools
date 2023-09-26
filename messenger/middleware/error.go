@@ -9,6 +9,6 @@ func Error2Resp() gin.HandlerFunc {
 		if len(ctx.Errors) <= 0 {
 			return
 		}
-		ctx.String(0, ctx.Errors.String())
+		ctx.JSON(0, map[string]string{"msg": ctx.Errors.String()})
 	}
 }

@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	wechatTokenURL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
-	wechatSendURL  = "https://qyapi.weixin.qq.com/cgi-bin/message/send"
+	wechatTokenURL  = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
+	wechatSendURL   = "https://qyapi.weixin.qq.com/cgi-bin/message/send"
+	wechatGetUIDURL = "https://qyapi.weixin.qq.com/cgi-bin/user/getuserid"
 )
 
 func init() {
@@ -51,6 +52,36 @@ func (w *wechatApp) send(msg *message) (err error) {
 
 func (w *wechatApp) getConf() map[string]string {
 	return w.conf
+}
+
+// getUIDByPhone
+//
+//	https://developer.work.weixin.qq.com/document/path/95402
+func (w *wechatApp) getUIDByPhone(phone string) (uid string, err error) {
+	if err = w.checkToken(); err != nil {
+		return
+	}
+
+	type res struct {
+		UserID string `json:"userid"`
+	}
+	r := &res{}
+
+	resp, err := rc.R().
+		SetQueryParam("access_token", w.token).
+		SetBody(map[string]any{
+			"mobile": phone,
+		}).
+		SetResult(r).
+		Post(wechatGetUIDURL)
+
+	if err = handleErr("get uid by phone with wechat app failed", err, resp, func(dt map[string]any) bool { return dt["errcode"] == 0.0 }); err != nil {
+		return
+	}
+
+	uid = r.UserID
+
+	return
 }
 
 func (w *wechatApp) checkToken() (err error) {

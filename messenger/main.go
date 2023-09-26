@@ -27,10 +27,12 @@ func main() {
 	v1 := r.Group("/v1").Use(middleware.Auth(authConf), middleware.Error2Resp())
 	{
 		v1.POST("/message", send.PushMessage)
+		v1.POST("/uid/getbyphone", send.GetUIDByPhone)
 
 		v1.POST("/senders", global.PushRemoteConf)
 		v1.PUT("/senders", global.PushRemoteConf)
 		v1.DELETE("/senders", global.PushRemoteConf)
+
 	}
 
 	eg := &errgroup.Group{}
