@@ -103,6 +103,7 @@ func PushMessage(ctx *gin.Context) {
 	if m.Sync {
 		if err := handleMessage(m); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
+			log.Println(err)
 		}
 		return
 	}
@@ -194,7 +195,7 @@ func handleMessage(msg *message) (err error) {
 	}()
 
 	s, ok := name2sender[msg.Sender]
-	if !ok {
+	if !ok || s == nil {
 		err = fmt.Errorf("cannot find sender with name %s", msg.Sender)
 		return
 	}

@@ -41,6 +41,19 @@ docker run -d --name messenger -p 8888:8888 -v $(pwd)/conf:/messenger/conf --res
 |extra|否|string|额外参数：通常情况下您只需要关注消息内容类型和其内容发送人，但是当您需要传递一些额外参数时，比如微信应用开启重复检查和检查时间间隔，可以将extra设置为`{"enable_duplicate_check":1, "duplicate_check_interval": 1800}`序列化后字符串|
 |sync|否|bool|同步发送：默认情况下，发送请求接受成功即返回200，消息会异步发送，若sync为true则会同步等待消息发送结果并返回|
 
+返回结果：
+```json
+// 正常 httpStatusCode==200
+{
+  "msg": "ok"
+}
+
+// 异常 httpStatusCode!=200
+{
+  "msg": "xxxx"
+}
+```
+
 请求示例：
 
 ### curl
@@ -112,6 +125,19 @@ func main() {
 | :----- | :------- | :----- | :----------------------------------------------------- |
 |body|是|json|请求body为您的sender配置，如`{"wechatBot": [{"name": "yourSenderName", "url": "https://xxx"}]`<br>POST：同类型配置会被全部覆盖<br>PUT：同类型同名称的配置会被更新，新配置将被添加<br>DELETE：同类型同名称配置将被删除|
 
+返回结果：
+```json
+// 正常 httpStatusCode==200
+{
+  "msg": "ok"
+}
+
+// 异常 httpStatusCode!=200
+{
+  "msg": "xxxx"
+}
+```
+
 ### 查询用户ID
 
 请求方式：POST
@@ -127,8 +153,15 @@ func main() {
 
 返回结果：
 ```json
+// 正常 httpStatusCode==200
 {
-  "uid": "xxxxxxxxxxxxx"
+  "uid": "xxxxxxxxxxxxx",
+  "msg": "ok"
+}
+
+// 异常 httpStatusCode!=200
+{
+  "msg": "xxxx"
 }
 ```
 
