@@ -30,7 +30,9 @@ func (e *email) send(msg *message) (err error) {
 			}, func() *gomail.Dialer {
 				return gomail.NewDialer(e.conf["host"], cast.ToInt(e.conf["port"]), e.conf["account"], e.conf["password"])
 			})
-		e.d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+		if !cast.ToBool(e.conf["tls"]) {
+			e.d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+		}
 	})
 
 	m := gomail.NewMessage()

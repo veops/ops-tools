@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	dingdingTokenURL = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
-	dingdingSendURL  = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
+	dingdingTokenURL  = "https://api.dingtalk.com/v1.0/oauth2/accessToken"
+	dingdingSendURL   = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
+	dingdingGetUIDURL = "https://oapi.dingtalk.com/topapi/v2/user/getbymobile"
 )
 
 func init() {
@@ -55,6 +56,40 @@ func (d *dingdingApp) send(msg *message) (err error) {
 
 func (d *dingdingApp) getConf() map[string]string {
 	return d.conf
+}
+
+// getUIDByPhone
+//
+//	https://open.dingtalk.com/document/orgapp/query-users-by-phone-number
+func (d *dingdingApp) getUIDByPhone(phone string) (uid string, err error) {
+	if err = d.checkToken(); err != nil {
+		return
+	}
+
+	type res struct {
+		Result struct {
+			ExclusiveAccountUseridList []string `json:"exclusive_account_userid_list"`
+			Userid                     string   `json:"userid"`
+		} `json:"result"`
+	}
+	r := &res{}
+
+	resp, err := rc.R().
+		SetQueryParam("access_token", d.token).
+		SetBody(map[string]any{
+			"support_exclusive_account_search": true,
+			"mobile":                           phone,
+		}).
+		SetResult(&r).
+		Post(dingdingGetUIDURL)
+
+	if err = handleErr("get uid by phone with dingding app failed", err, resp, func(dt map[string]any) bool { return dt["errcode"] == 0.0 }); err != nil {
+		return
+	}
+
+	uid = r.Result.Userid
+
+	return
 }
 
 func (d *dingdingApp) checkToken() (err error) {

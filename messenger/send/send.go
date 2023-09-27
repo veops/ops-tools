@@ -28,6 +28,11 @@ type sender interface {
 	getConf() map[string]string
 }
 
+type senderManager interface {
+	sender
+	getUIDByPhone(string) (string, error)
+}
+
 type message struct {
 	Sender     string         `json:"sender"`
 	MsgType    string         `json:"msgtype"`
@@ -39,6 +44,11 @@ type message struct {
 	Sync       bool           `json:"sync"`
 	ContentMap map[string]any `json:"-"`
 	ExtraMap   map[string]any `json:"-"`
+}
+
+type getUIDByPhoneReq struct {
+	Sender string `json:"sender"`
+	Phone  string `json:"phone"`
 }
 
 func init() {
@@ -93,11 +103,44 @@ func PushMessage(ctx *gin.Context) {
 	if m.Sync {
 		if err := handleMessage(m); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
+			log.Println(err)
 		}
 		return
 	}
 
 	msgCh <- m
+}
+
+func GetUIDByPhone(ctx *gin.Context) {
+	var err error
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+		}
+	}()
+	r := &getUIDByPhoneReq{}
+	if err := ctx.ShouldBindBodyWith(&r, binding.JSON); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	s, ok := name2sender[r.Sender]
+	if !ok || s == nil {
+		err = fmt.Errorf("cannot find sender with name %s", r.Sender)
+		return
+	}
+	sm, ok := s.(senderManager)
+	if !ok || sm == nil {
+		err = fmt.Errorf("sender with name %s and type %s does not support to query uid by phone", r.Sender, s.getConf()["type"])
+		return
+	}
+	uid, err := sm.getUIDByPhone(r.Phone)
+	if err != nil {
+		return
+	}
+	ctx.JSON(http.StatusOK, map[string]string{"uid": uid})
 }
 
 func handleErr(info string, e error, resp *resty.Response, isOk func(dt map[string]any) bool) error {
@@ -146,13 +189,13 @@ func handleMessage(msg *message) (err error) {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
 		}
-		if err != nil {
+		if err != nil && !msg.Sync {
 			log.Println(err)
 		}
 	}()
 
 	s, ok := name2sender[msg.Sender]
-	if !ok {
+	if !ok || s == nil {
 		err = fmt.Errorf("cannot find sender with name %s", msg.Sender)
 		return
 	}

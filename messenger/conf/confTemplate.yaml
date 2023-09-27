@@ -19,6 +19,7 @@ senders:
     #   port: 25
     #   account: test@xxx.com
     #   password: #无密码时留空即可
+    #   tls: false
   wechatBot:
     # - name: yourSenderName2
     #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
