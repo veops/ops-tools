@@ -117,7 +117,7 @@ func main() {
 
 请求方式：POST PUT DELETE
 
-请求地址：http://127.0.0.1:8888/v1/sender
+请求地址：http://127.0.0.1:8888/v1/senders
 
 参数说明：
 
@@ -232,10 +232,10 @@ auths:
   #   pattern: 192.168.*.*
 
   # - type: token
-  #   token: 778899
+  #   token: your token
 
   # - type: sign
-  #   secret: 666
+  #   secret: your secret
 
 senders:
   email:
@@ -244,14 +244,14 @@ senders:
     #   port: 25
     #   account: test@xxx.com
     #   password: #无密码时留空即可
-    #   tls: false
+    #   tls: "false"
   wechatBot:
     # - name: yourSenderName2
     #   url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxx
   wechatApp:
     # - name: yourSenderName3
     #   corpid: xxxx
-    #   agentid: 123456
+    #   agentid: xxxx
     #   corpsecret: xxxx
   feishuBot:
     # - name: yourSenderName4

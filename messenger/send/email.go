@@ -2,7 +2,6 @@ package send
 
 import (
 	"crypto/tls"
-	"log"
 	"sync"
 
 	"github.com/samber/lo"
@@ -42,11 +41,7 @@ func (e *email) send(msg *message) (err error) {
 	m.SetHeader("Cc", msg.Ccs...)
 	m.SetBody(msg.MsgType, msg.Content)
 
-	if err = e.d.DialAndSend(m); err != nil {
-		log.Println(err)
-	}
-
-	return
+	return e.d.DialAndSend(m)
 }
 
 func (e *email) getConf() map[string]string {
