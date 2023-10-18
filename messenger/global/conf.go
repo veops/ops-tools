@@ -10,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/jinzhu/copier"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/confmap"
@@ -95,8 +94,8 @@ func GetSenders() (senders []map[string]string, err error) {
 }
 
 func PushRemoteConf(ctx *gin.Context) {
-	cur := make(map[string][]map[string]string)
-	if err := ctx.ShouldBindBodyWith(&cur, binding.JSON); err != nil {
+	update := make(map[string][]map[string]string)
+	if err := ctx.ShouldBindBodyWith(&update, binding.JSON); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -104,29 +103,39 @@ func PushRemoteConf(ctx *gin.Context) {
 	mtx.Lock()
 	defer mtx.Unlock()
 
-	pre := make(map[string][]map[string]string)
+	pre, cur := make(map[string][]map[string]string), make(map[string][]map[string]string)
 	k.Unmarshal("senders", &pre)
+	k.Unmarshal("senders", &cur)
 	switch ctx.Request.Method {
 	case "POST":
+		for t, ss := range update {
+			cur[t] = ss
+		}
 	case "PUT":
-		for t, ss := range cur {
+		for t, ss := range update {
 			m := lo.Assign(
-				lo.SliceToMap(pre[t], func(s map[string]string) (string, map[string]string) { return s["name"], s }),
+				lo.SliceToMap(cur[t], func(s map[string]string) (string, map[string]string) { return s["name"], s }),
 				lo.SliceToMap(ss, func(s map[string]string) (string, map[string]string) { return s["name"], s }),
 			)
 			cur[t] = lo.MapToSlice(m, func(_ string, v map[string]string) map[string]string { return v })
 		}
 	case "DELETE":
-		del := cur
-		cur = make(map[string][]map[string]string, 0)
-		copier.Copy(&cur, pre)
-		for t, ss := range cur {
+		for t, ss := range update {
 			m := lo.OmitByKeys(
-				lo.SliceToMap(ss, func(s map[string]string) (string, map[string]string) { return s["name"], s }),
-				lo.Map(del[t], func(v map[string]string, _ int) string { return v["name"] }),
+				lo.SliceToMap(cur[t], func(s map[string]string) (string, map[string]string) { return s["name"], s }),
+				lo.Map(ss, func(v map[string]string, _ int) string { return v["name"] }),
 			)
 			cur[t] = lo.MapToSlice(m, func(_ string, v map[string]string) map[string]string { return v })
 		}
+	}
+
+	allSenderName := make([]string, 0)
+	for _, v := range cur {
+		allSenderName = append(allSenderName, lo.Map(v, func(m map[string]string, _ int) string { return m["name"] })...)
+	}
+	if dup := lo.FindDuplicates(allSenderName); len(dup) > 0 {
+		ctx.AbortWithError(http.StatusBadRequest, fmt.Errorf("duplicate sender name = %v", dup))
+		return
 	}
 
 	if reflect.DeepEqual(pre, cur) {
