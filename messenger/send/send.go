@@ -167,6 +167,7 @@ func handleConfig() {
 	valid := make(map[string]struct{})
 	for _, conf := range confs {
 		name := conf["name"]
+		valid[name] = struct{}{}
 		if s, ok := name2sender[name]; !ok || s == nil || !reflect.DeepEqual(conf, s.getConf()) {
 			f, ok := registered[conf["type"]]
 			if !ok || f == nil {
@@ -174,12 +175,11 @@ func handleConfig() {
 			}
 			name2sender[name] = f(conf)
 		}
-		valid[name] = struct{}{}
 	}
 
-	for n := range name2sender {
-		if _, ok := valid[n]; !ok {
-			delete(name2sender, n)
+	for k, v := range name2sender {
+		if _, ok := valid[k]; !ok || v == nil {
+			delete(name2sender, k)
 		}
 	}
 }
