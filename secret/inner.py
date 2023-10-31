@@ -77,6 +77,9 @@ class Backend:
     def add(self, key, value):
         return self.backend.add(key, value)
 
+    def update(self, key, value):
+        return self.backend.update(key, value)
+
 
 class KeyManage:
 
