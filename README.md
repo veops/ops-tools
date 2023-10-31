@@ -11,6 +11,9 @@
 
 [messenger](messenger/README.md) 简单易用的消息发送服务
 
+[secret](secret/README.md) 封装好的敏感数据存储工具, 自实现或者对接vault
+
+
 ### TODO
 [netTopology]() 基于现有输出的结构化数据绘制网络拓扑图
 
