@@ -5,13 +5,16 @@
 
 ### 独立组件
 
+#### golang
 [zabbix2tsdb](zabbix2tsdb/readme.md)  将zabbix的监控数据转换为prometheus格式输出
 
-[netTopology](netTopology)  基于SNMP协议自动发现局域网网络拓扑关系,输出拓扑数据结构
+[netTopology](netTopology) 基于SNMP协议自动发现局域网网络拓扑关系,输出拓扑数据结构
 
 [messenger](messenger/README.md) 简单易用的消息发送服务
 
-[secret](secret/README.md) 封装好的敏感数据存储工具, 自实现或者对接vault
+
+#### python
+[secret](secret/README.md)  封装好的敏感数据存储工具, 自实现或者对接vault
 
 
 ### TODO
