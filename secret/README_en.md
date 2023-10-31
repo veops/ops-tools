@@ -58,5 +58,6 @@ _data = sdk.read(_path, decrypt=True)
 ```
 
 ### Other Use cases
-> 如果您想在flask项目中使用它，可以参考开源项目[veops/cmdb](http://github.com/veops/cmdb)中
-> 关于密码部分的使用，包括fask command 和api中对相应的功能的调用
+> If you want to use it in a Flask project, you can refer to the usage of the password
+> section in the open-source project [veops/cmdb](http://github.com/veops/cmdb), 
+> including the use of Flask commands and API calls for the corresponding functionality.
