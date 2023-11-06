@@ -2,6 +2,7 @@ package send
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -37,6 +38,16 @@ func (f *feishuApp) send(msg *message) (err error) {
 		return
 	}
 
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText:
+			msg.ContentMap = map[string]any{
+				msg.MsgType: msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", f.conf["type"], msg.MsgType)
+		}
+	}
 	resp, err := rc.R().
 		SetAuthToken(f.token).
 		SetQueryParam("receive_id_type", "user_id").

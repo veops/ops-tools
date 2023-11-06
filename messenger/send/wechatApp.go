@@ -2,6 +2,7 @@ package send
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +37,17 @@ type wechatApp struct {
 func (w *wechatApp) send(msg *message) (err error) {
 	if err = w.checkToken(); err != nil {
 		return
+	}
+
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText, simpleMarkdown:
+			msg.ContentMap = map[string]any{
+				"content": msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", w.conf["type"], msg.MsgType)
+		}
 	}
 	resp, err := rc.R().
 		SetQueryParam("access_token", w.token).

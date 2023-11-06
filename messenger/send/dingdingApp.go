@@ -2,6 +2,7 @@ package send
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -37,6 +38,23 @@ func (d *dingdingApp) send(msg *message) (err error) {
 		return
 	}
 
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText:
+			msg.MsgType = "sampleText"
+			msg.ContentMap = map[string]any{
+				"content": msg.Content,
+			}
+		case simpleMarkdown:
+			msg.MsgType = "sampleMarkdown"
+			msg.ContentMap = map[string]any{
+				"title": msg.Title,
+				"text":  msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", d.conf["type"], msg.MsgType)
+		}
+	}
 	bs, _ := json.Marshal(msg.ContentMap)
 	resp, err := rc.R().
 		SetHeader("x-acs-dingtalk-access-token", d.token).

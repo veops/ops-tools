@@ -1,6 +1,8 @@
 package send
 
 import (
+	"fmt"
+
 	"github.com/samber/lo"
 )
 
@@ -18,10 +20,20 @@ type feishuBot struct {
 //
 //	https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot
 func (f *feishuBot) send(msg *message) error {
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText:
+			msg.ContentMap = map[string]any{
+				msg.MsgType: msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", f.conf["type"], msg.MsgType)
+		}
+	}
 	resp, err := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msg_type": msg.MsgType,
-			"content": msg.ContentMap,
+			"content":  msg.ContentMap,
 		})).
 		Post(f.conf["url"])
 

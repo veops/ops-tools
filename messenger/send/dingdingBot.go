@@ -25,6 +25,21 @@ type dingdingBot struct {
 //
 //	https://open.dingtalk.com/document/orgapp/custom-bot-creation-and-installation
 func (d *dingdingBot) send(msg *message) error {
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText:
+			msg.ContentMap = map[string]any{
+				"content": msg.Content,
+			}
+		case simpleMarkdown:
+			msg.ContentMap = map[string]any{
+				"title": msg.Title,
+				"text":  msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", d.conf["type"], msg.MsgType)
+		}
+	}
 	r := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msgtype":   msg.MsgType,

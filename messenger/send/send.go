@@ -15,6 +15,11 @@ import (
 	"messenger/global"
 )
 
+const (
+	simpleText     = "text"
+	simpleMarkdown = "markdown"
+)
+
 var (
 	registered  = make(map[string]func(map[string]string) sender)
 	msgCh       = make(chan *message, 10000)
@@ -42,6 +47,7 @@ type message struct {
 	Ccs        []string       `json:"ccs"`
 	Extra      string         `json:"extra"`
 	Sync       bool           `json:"sync"`
+	Simple     bool           `json:"simple"`
 	ContentMap map[string]any `json:"-"`
 	ExtraMap   map[string]any `json:"-"`
 }
@@ -85,7 +91,8 @@ func PushMessage(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	if s, ok := name2sender[m.Sender]; ok && s != nil && s.getConf()["type"] != "email" {
+
+	if s, ok := name2sender[m.Sender]; ok && s != nil && s.getConf()["type"] != "email" && !m.Simple {
 		if m.Content != "" {
 			if err := json.Unmarshal([]byte(cast.ToString(m.Content)), &m.ContentMap); err != nil {
 				ctx.AbortWithError(http.StatusBadRequest, err)

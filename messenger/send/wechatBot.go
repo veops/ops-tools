@@ -1,6 +1,8 @@
 package send
 
 import (
+	"fmt"
+
 	"github.com/samber/lo"
 )
 
@@ -18,6 +20,16 @@ type wechatBot struct {
 //
 //	https://developer.work.weixin.qq.com/document/path/99110
 func (w *wechatBot) send(msg *message) error {
+	if msg.Simple {
+		switch msg.MsgType {
+		case simpleText, simpleMarkdown:
+			msg.ContentMap = map[string]any{
+				"content": msg.Content,
+			}
+		default:
+			return fmt.Errorf("sender type %s does not support simple type %s", w.conf["type"], msg.MsgType)
+		}
+	}
 	resp, err := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msgtype":   msg.MsgType,
