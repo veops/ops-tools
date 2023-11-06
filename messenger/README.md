@@ -40,6 +40,8 @@ docker run -d --name messenger -p 8888:8888 -v $(pwd)/conf:/messenger/conf --res
 |ccs|否|[]string|抄送人列表：仅用于 email 类型|
 |extra|否|string|额外参数：通常情况下您只需要关注消息内容类型和其内容发送人，但是当您需要传递一些额外参数时，比如微信应用开启重复检查和检查时间间隔，可以将extra设置为`{"enable_duplicate_check":1, "duplicate_check_interval": 1800}`序列化后字符串|
 |sync|否|bool|同步发送：默认情况下，发送请求接受成功即返回200，消息会异步发送，若sync为true则会同步等待消息发送结果并返回|
+|simple|否|bool|简单内容：默认情况下，消息内容是json字符串（参考content参数），对于简单的消息类型text和markdown可设置simple=true，此时content仅填写内容字符串本身即可，如`my content`。<br>支持的消息类型（msgtype）<br>text: wechatBot wechatApp feishuBot feishuApp dingdingBot dingdingApp<br>markdown: wechatBot wechatApp dingdingBot dingdingApp
+|
 
 返回结果：
 ```json
