@@ -16,6 +16,8 @@ based on the SNMP protocol and output the topology data structure
 
 [secret](secret/README.md) Packaged sensitive data storage tool， inner method or Integrating with Vault
 
+[auto_discover](auto_discover/README.md) Instance auto-discovery, primarily used in CMDB auto-discovery plugins.
+
 
 ### TODO
 [netTopology]() Draw a network topology diagram based on the existing structured data output.
