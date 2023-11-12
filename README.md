@@ -15,6 +15,7 @@
 
 #### python
 [secret](secret/README.md)  封装好的敏感数据存储工具, 自实现或者对接vault
+
 [auto_discover](auto_discover/README.md)  实例自动发现，主要用于cmdb自发现插件中
 
 
