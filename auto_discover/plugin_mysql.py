@@ -185,9 +185,12 @@ class Scan:
             if 'mysqld' in config:
                 port = config['mysqld'].get("port", "3306")
                 pid_file = config['mysqld'].get("pid-file")
-                ok, name = Utils.get_pid(pid_file)
-                if ok and name == "mysqld":
-                    instances.append((self.local_ip, port, ""))
+
+                pid = Utils.get_pid(pid_file)
+                if pid:
+                    ok, name = Utils.is_pid_running(pid)
+                    if ok and name == "mysqld":
+                        instances.append((self.local_ip, port, ""))
 
         return instances
 
@@ -294,7 +297,7 @@ class Utils:
         try:
             with open(pid_file_path, "r") as file:
                 pid = file.read().strip()
-                return pid
+                return int(pid)
         except FileNotFoundError:
             return None
         except IOError as e:
@@ -375,5 +378,3 @@ if __name__ == "__main__":
         print("AutoDiscovery::Result::{}".format(json.dumps(result)))
     else:
         print("ERROR: 采集返回必须是列表")
-
-
