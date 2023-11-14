@@ -5,6 +5,7 @@ import importlib
 import json
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -17,7 +18,7 @@ try:
 except:
     pass
 
-global_scan_ip = "192.168.20.10"  # Identify on which device the subnet scanning is performed.
+global_scan_ip = "10.0.2.15"  # Identify on which device the subnet scanning is performed.
 cidrs = ["192.168.20.8/30"]  # Subnet to be scanned.
 global_ports_range = "3306-3310,3320"  # ports to be scanned. such as "3306-3310,3320"
 
@@ -45,15 +46,15 @@ class Module:
         try:
             importlib.import_module(module_name)
         except ImportError:
-            print("module '{}' is not installed. Installing...".format(module_name))
             try:
-                import pip
-            except ImportError:
-                print("pip is not installed. Please install it manually.")
-                return
+                subprocess.check_output(["pip", "--version"])
+            except subprocess.CalledProcessError:
+                print("pips has not been installed, try to install...")
+                subprocess.check_call([sys.executable, "-m", "ensurepip"])
 
             try:
-                pip.main(['install', '--index-url', self.index_url, module_name])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", '--index-url',
+                                       self.index_url, module_name])
                 print("module '{}' has been installed successfully.".format(module_name))
             except Exception as e:
                 print("Failed to install module '{}': {}".format(module_name, str(e)))
@@ -98,8 +99,8 @@ class Scan:
 
         semaphore = threading.Semaphore(threading_number)
 
-        def worker(scan_ip, scan_port):
-            r1 = self.scan_port(scan_ip, scan_port)
+        def worker(scan_ip, s_port):
+            r1 = self.scan_port(scan_ip, s_port)
             if r1:
                 instances.append(r1)
             semaphore.release()
