@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-resty/resty/v2"
+	"github.com/samber/lo"
 	"github.com/spf13/cast"
 
 	"messenger/global"
@@ -48,6 +49,7 @@ type message struct {
 	Extra      string         `json:"extra"`
 	Sync       bool           `json:"sync"`
 	Simple     bool           `json:"simple"`
+	Ats        []string       `json:"ats"`
 	ContentMap map[string]any `json:"-"`
 	ExtraMap   map[string]any `json:"-"`
 }
@@ -91,6 +93,7 @@ func PushMessage(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	m.Ats = lo.Uniq(m.Ats)
 
 	if s, ok := name2sender[m.Sender]; ok && s != nil && s.getConf()["type"] != "email" && !m.Simple {
 		if m.Content != "" {
@@ -99,11 +102,11 @@ func PushMessage(ctx *gin.Context) {
 				return
 			}
 		}
-		if m.Extra != "" {
-			if err := json.Unmarshal([]byte(cast.ToString(m.Extra)), &m.ExtraMap); err != nil {
-				ctx.AbortWithError(http.StatusBadRequest, err)
-				return
-			}
+	}
+	if m.Extra != "" {
+		if err := json.Unmarshal([]byte(cast.ToString(m.Extra)), &m.ExtraMap); err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
 		}
 	}
 
