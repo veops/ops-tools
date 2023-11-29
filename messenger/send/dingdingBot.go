@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/samber/lo"
@@ -33,17 +34,33 @@ func (d *dingdingBot) send(msg *message) error {
 			}
 		case simpleMarkdown:
 			msg.ContentMap = map[string]any{
-				"title": msg.Title,
-				"text":  msg.Content,
+				"text": msg.Content,
 			}
 		default:
 			return fmt.Errorf("sender type %s does not support simple type %s", d.conf["type"], msg.MsgType)
 		}
 	}
+	if msg.MsgType == simpleMarkdown {
+		msg.ContentMap["title"] = msg.Title
+	}
+
+	at := make(map[string]any)
+	if len(msg.Ats) > 0 {
+		switch msg.MsgType {
+		case simpleText, simpleMarkdown:
+			at["isAtAll"] = lo.Contains(msg.Ats, "@all")
+			at["atUserIds"] = lo.Without(msg.Ats, "@all")
+			msg.ContentMap["text"] = fmt.Sprintf("%v \n %s",
+				msg.ContentMap["text"],
+				strings.Join(lo.Map(msg.Ats, func(s string, _ int) string { return fmt.Sprintf("@%s", s) }), " "))
+		}
+	}
+
 	r := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msgtype":   msg.MsgType,
 			msg.MsgType: msg.ContentMap,
+			"at":        at,
 		}))
 	if d.conf["token"] != "" {
 		ts := time.Now().UnixMilli()

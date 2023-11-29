@@ -2,6 +2,7 @@ package send
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/samber/lo"
 )
@@ -30,6 +31,18 @@ func (w *wechatBot) send(msg *message) error {
 			return fmt.Errorf("sender type %s does not support simple type %s", w.conf["type"], msg.MsgType)
 		}
 	}
+	
+	if len(msg.Ats) > 0 {
+		switch msg.MsgType {
+		case simpleText:
+			msg.ContentMap["mentioned_list"] = msg.Ats
+		case simpleMarkdown:
+			msg.ContentMap["content"] = fmt.Sprintf("%v \n %s",
+				msg.ContentMap["content"],
+				strings.Join(lo.Map(msg.Ats, func(s string, _ int) string { return fmt.Sprintf("<@%s>", s) }), " "))
+		}
+	}
+
 	resp, err := rc.R().
 		SetBody(lo.Assign(msg.ExtraMap, map[string]any{
 			"msgtype":   msg.MsgType,
