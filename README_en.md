@@ -26,4 +26,6 @@ based on the SNMP protocol and output the topology data structure
 
 _**Stay connected with us through our official WeChat account. Click to contact us and join our WeChat/QQ operations and maintenance groups to get more product and industry-related information.**_
 
-![veops](docs/images/wechat.jpg)
+<p align="center">
+  <img src="docs/images/wechat.png" alt="公众号: 维易科技OneOps" />
+</p>

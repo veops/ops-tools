@@ -26,9 +26,9 @@
 ---
 _**欢迎关注公众号(维易科技OneOps)，关注后可加入微信群，进行产品和技术交流。**_
 
-![公众号: 维易科技OneOps](docs/images/wechat.jpg)
-
-
+<p align="center">
+  <img src="docs/images/wechat.png" alt="公众号: 维易科技OneOps" />
+</p>
 
 
 
